@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Display</title>
+    <style>
+        /* Add your CSS styles here */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: "Comic Sans MS", cursive;
+            font-size: 90px;
+            color: darkblue;
+            background-color: #95c64d; /* Nature green background */
+        }
+        .icon {
+            display: none;
+            font-size: 80px;
+        }
+        #checkIcon {
+            color: green;
+        }
+        #crossIcon {
+            color: red;
+        }
+        #scoreDisplay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 40px;
+        }
+        #resultSheet {
+            display: none;
+            margin-top: 25px;
+            padding: 20px;
+            border: 2px solid darkblue;
+            border-radius: 10px;
+            background-color: white;
+            font-size: 36px;
+        }
+        #resultSheet h2 {
+            margin-top: 0;
+        }
+        #resultSheet ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #resultSheet li.correct {
+            color: green;
+        }
+        #resultSheet li.incorrect {
+            color: red;
+        }
+        #restartButton,
+        #skipButton,
+        #checkButton,
+        #addWordButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background-color: #FFD700; /* Gold */
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+        #restartButton:hover,
+        #skipButton:hover,
+        #checkButton:hover,
+        #addWordButton:hover {
+            background-color: #FFC72C; /* Darker gold on hover */
+        }
+
+        /* Set width of text box to match the width of displayed word */
+        #spokenWord {
+            width: 20%;
+            font-size: inherit;
+            font-family: inherit;
+            color: inherit;
+            border: none;
+            border-bottom: 2px solid black;
+            background-color: white ;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* CSS for printing */
+        @media print {
+            body * {
+                display: none;
+            }
+            #resultSheet, #resultSheet * {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="word"></div>
+    <div id="checkIcon" class="icon">&#x2714;</div>
+    <div id="crossIcon" class="icon">&#x2718;</div>
+    <input type="text" id="spokenWord" placeholder="Speak here..." onclick="startListening()">
+    <button id="checkButton" onclick="checkSpokenWord()"> Check</button> <!-- Updated Check button -->
+    <button id="skipButton" onclick="skip()">Skip</button>
+    <div id="scoreDisplay">Score: <span id="score">0</span>/5</div>
+    <div id="resultSheet">
+        <h2>Result Sheet</h2>
+        <ul id="resultList"></ul>
+    </div>
+    <button id="restartButton" onclick="restart()">Restart</button>
+    <button id="addWordButton" onclick="addWord()">Add Word</button>
+    <script>
+        // Define an array of words
+        var words = ["a", "the", "if", "they", "will", "some", "that", "and", "I", "he", "it", "see", "than", "do", "old", "did", "your", "you", "can", "no", "go", "we", "be", "are", "out", "or", "had", "up", "one", "me", "two", "on", "from", "as", "an", "them", "has", "big", "she", "look", "my", "run", "then", "well", "what", "there", "not", "this", "dad", "at", "said", "like", "made", "here", "just", "over", "now", "cat", "for", "off", "with", "get", "came", "about", "when", "been", "by", "yes", "play", "come", "am", "down", "who", "more", "before", "want", "where", "dog", "day", "but", "all", "so", "our", "must", "little", "could", "right", "going", "us", "mum", "his", "him", "her", "was", "much", "have", "went"];
+        
+        // Declare variables for score and results
+        var score = 0;
+        var results = [];
+
+        // Function to display a random word
+        function displayWord() {
+            var currentWordIndex = Math.floor(Math.random() * words.length);
+            var word = words[currentWordIndex];
+            document.getElementById("word").innerText = word;
+            document.getElementById("spokenWord").value = ""; // Clear the text box
+            document.getElementById("checkIcon").style.display = "none"; // Hide the check icon
+            document.getElementById("crossIcon").style.display = "none"; // Hide the cross icon
+        }
+
+        // Function to start speech recognition
+        function startListening() {
+            var recognition = new webkitSpeechRecognition();
+            recognition.lang = 'en-UK';
+            recognition.onresult = function(event) {
+                var spokenWord = event.results[0][0].transcript.toLowerCase();
+                document.getElementById("spokenWord").value = spokenWord; // Set the value of the text box to the spoken word
+            }
+            recognition.start();
+        }
+
+        // Function to check the correctness of the spoken word
+        function checkSpokenWord() {
+            var spokenWord = document.getElementById("spokenWord").value.trim().toLowerCase();
+            var displayedWord = document.getElementById("word").innerText.trim().toLowerCase();
+            var result = { word: displayedWord, correct: false };
+            if (spokenWord === displayedWord) {
+                result.correct = true;
+                score++;
+                document.getElementById("score").innerText = score;
+            }
+            results.push(result);
+            if (results.length === 5) {
+                showResultSheet();
+            } else {
+                displayWord();
+            }
+        }
+
+        // Function to show the result sheet
+        function showResultSheet() {
+            var resultList = document.getElementById("resultList");
+            resultList.innerHTML = ""; // Clear previous results
+            for (var i = 0; i < results.length; i++) {
+                var listItem = document.createElement("li");
+                listItem.textContent = results[i].word + " - " + (results[i].correct ? "Correct" : "Incorrect");
+                listItem.className = results[i].correct ? "correct" : "incorrect";
+                resultList.appendChild(listItem);
+            }
+            document.getElementById("resultSheet").style.display = "block";
+            if (score === 10) {
+                document.getElementById("resultSheet").getElementsByTagName("h2")[0].innerText = "Result Sheet - CONGRATULATIONS!";
+            }
+        }
+
+        // Function to restart the game
+        function restart() {
+            score = 0;
+            results = [];
+            document.getElementById("score").innerText = score;
+            document.getElementById("resultSheet").style.display = "none";
+            displayWord();
+        }
+
+        // Function to skip to the next word
+        function skip() {
+            var displayedWord = document.getElementById("word").innerText.trim();
+            results.push({ word: displayedWord, correct: false });
+            if (results.length === 5) {
+                showResultSheet();
+            } else {
+                displayWord();
+            }
+        }
+
+        // Function to add a word to the array
+        function addWord() {
+            var newWord = document.getElementById("spokenWord").value.trim();
+            if (newWord !== "") {
+                words.push(newWord);
+                console.log("Word added:", newWord);
+                document.getElementById("spokenWord").value = ""; // Clear the text box
+            }
+        }
+
+        // Initial display of a word when the page loads
+        displayWord();
+    </script>
+</body>
+</html>
